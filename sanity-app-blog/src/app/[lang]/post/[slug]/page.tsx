@@ -13,12 +13,23 @@ const urlFor = (source: SanityImageSource) =>
 
 const options = { next: { revalidate: 30 } };
 
-export default async function PostPage({ params }: { params: Promise<{ slug: string }> }) {
-  const post = await client.fetch<SanityDocument>(POST_QUERY, await params, options);
-  const postImageUrl = post.image ? urlFor(post.image)?.width(550).height(310).url() : null;
+export default async function PostPage({
+  params,
+}: {
+  params: Promise<{ slug: string; lang: string }>;
+}) {
+  const { lang, slug } = await params;
+  console.log('lang slug', lang);
+  const post = await client.fetch<SanityDocument>(POST_QUERY, { slug }, options);
+
+  const postImageUrl = post?.mainImage
+    ? urlFor(post.mainImage)?.width(550).height(310).url()
+    : null;
+
+  if (!post) return <div>No post</div>;
 
   return (
-    <main className='container mx-auto min-h-screen max-w-3xl p-8 flex flex-col gap-4'>
+    <main className='container mx-auto max-w-3xl p-8 flex flex-col gap-4'>
       <Link href='/' className='hover:underline'>
         ← Back to posts
       </Link>
