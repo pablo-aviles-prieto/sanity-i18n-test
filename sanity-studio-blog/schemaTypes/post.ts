@@ -49,6 +49,12 @@ export default defineType({
       title: 'Body',
       type: 'blockContent',
     }),
+    defineField({
+      // should match 'languageField' property in the plugin configuration setting, if customized (defs to language)
+      name: 'language',
+      type: 'string',
+      readOnly: true,
+    }),
   ],
 
   preview: {
