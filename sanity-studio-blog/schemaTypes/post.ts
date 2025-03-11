@@ -1,9 +1,12 @@
 import {defineField, defineType} from 'sanity'
+import {DocumentIcon} from '@sanity/icons'
+import {v4 as uuidv4} from 'uuid'
 
 export default defineType({
   name: 'post',
   title: 'Post',
   type: 'document',
+  icon: DocumentIcon,
   fields: [
     defineField({
       name: 'title',
@@ -54,6 +57,14 @@ export default defineType({
       name: 'language',
       type: 'string',
       readOnly: true,
+    }),
+    defineField({
+      name: 'translationGroup',
+      title: 'Translation Group',
+      type: 'string',
+      readOnly: true,
+      // hidden: true,
+      initialValue: () => uuidv4(),
     }),
   ],
 
