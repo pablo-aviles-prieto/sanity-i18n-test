@@ -80,7 +80,7 @@ export default defineType({
       return {
         ...selection,
         title: `${title} (${language.toUpperCase()})`,
-        subtitle: author && `by ${author})`,
+        subtitle: author && `by ${author}`,
       }
     },
   },

@@ -5,6 +5,8 @@ import {schemaTypes} from './schemaTypes'
 import {documentInternationalization} from '@sanity/document-internationalization'
 import {BellIcon} from '@sanity/icons'
 import {structure} from './structure'
+import {locales} from './lib/i18n'
+import {v4 as uuidv4} from 'uuid'
 
 // Environment variables for project configuration
 const projectId = process.env.SANITY_STUDIO_PROJECT_ID || ''
@@ -32,24 +34,20 @@ export default defineConfig({
 
   schema: {
     types: schemaTypes,
-    templates: (prev, context) => {
-      const enhancedTemplates: Template<any, any>[] = [
-        ...prev,
-        {
-          id: 'grouped-post-en',
-          title: 'New english post groupped',
-          schemaType: 'post',
-          value: (params: any) => {
-            console.log('params groupped-post-en', params)
-            return {
-              translationGroup: params?.translationGroup ?? 'test',
-              language: 'en',
-            }
-          },
+    templates: (prev) => {
+      const grouppedPostsTemplates: Template<any, any>[] = locales.map((lang) => ({
+        id: `grouped-post-${lang.locale}`,
+        title: `New ${lang.title} post`,
+        schemaType: 'post',
+        value: (params: Record<string, any>) => {
+          return {
+            translationGroup: params?.translationGroup ?? uuidv4(),
+            language: lang.locale,
+          }
         },
-      ]
+      }))
 
-      return enhancedTemplates
+      return [...prev, ...grouppedPostsTemplates]
     },
   },
 

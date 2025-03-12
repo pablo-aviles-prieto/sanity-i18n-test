@@ -1,6 +1,6 @@
 import {DocumentsIcon, TagsIcon, UsersIcon} from '@sanity/icons'
 import {StructureResolver} from 'sanity/structure'
-import {v4 as uuidv4} from 'uuid'
+import {locales} from '../lib/i18n'
 
 interface TitleShortenerOptions {
   characters?: number
@@ -11,6 +11,10 @@ const titleShortener = (title: string, options: TitleShortenerOptions = {}) => {
   const {characters = 10, ellipsis = true} = options
   return title.length > characters ? `${title.slice(0, characters)}${ellipsis ? '...' : ''}` : title
 }
+
+const apiVersion = process.env.SANITY_STUDIO_API_VERSION || '2025-03-12'
+const SELECTED_POST_QUERY = `*[_id == $postId][0]{translationGroup, title}`
+const POSTS_UNDER_TRANSLATION_GROUP_QUERY = `*[_type == "post" && translationGroup == $translationGroup]{language}`
 
 export const structure: StructureResolver = (S) => {
   return S.list()
@@ -42,30 +46,39 @@ export const structure: StructureResolver = (S) => {
               return true
             })
             .child(async (postId, {structureContext}) => {
-              const query = `*[_id == $postId][0]{translationGroup, title}`
-              const data = await structureContext
-                .getClient({apiVersion: '2025-03-11'})
-                .fetch(query, {postId})
-              // Check based on i18n locales which posts are created or not.
-              // So the missing languages pass to the menuItems, with the correct template
-              // and the translationGroup provided
+              const selectedPostData = await structureContext
+                .getClient({apiVersion})
+                .fetch(SELECTED_POST_QUERY, {postId})
+              const translationGroupId = selectedPostData?.translationGroup
 
-              return S.documentList()
-                .title(`${titleShortener(data?.title ?? '', {characters: 15})} Translations`)
-                .schemaType('post')
-                .filter('_type == "post" && translationGroup == $translationGroup')
-                .params({translationGroup: data?.translationGroup})
-                .menuItems([
-                  S.menuItem()
-                    .title('English post')
+              const languagePosts = await structureContext
+                .getClient({apiVersion})
+                .fetch(POSTS_UNDER_TRANSLATION_GROUP_QUERY, {translationGroup: translationGroupId})
+              const existingLanguages: string[] = languagePosts.map(
+                (post: Record<string, string>) => post.language,
+              )
+              const menuItems = locales
+                .filter((lang) => !existingLanguages.includes(lang.locale))
+                .map((lang) => {
+                  return S.menuItem()
+                    .title(`Add ${lang.icon} ${lang.title} translation`)
                     .intent({
                       type: 'create',
                       params: [
-                        {type: 'person', template: 'grouped-post-en'},
-                        {translationGroup: data?.translationGroup},
+                        {type: 'post', template: `grouped-post-${lang.locale}`},
+                        {translationGroup: translationGroupId},
                       ],
-                    }),
-                ])
+                    })
+                })
+
+              return S.documentList()
+                .title(
+                  `${titleShortener(selectedPostData?.title ?? '', {characters: 15})} Translations`,
+                )
+                .schemaType('post')
+                .filter('_type == "post" && translationGroup == $translationGroup')
+                .params({translationGroup: translationGroupId})
+                .menuItems(menuItems)
             })
         }),
 
