@@ -2,16 +2,7 @@ import {DocumentsIcon, TagsIcon, UsersIcon} from '@sanity/icons'
 import {StructureResolver} from 'sanity/structure'
 import {locales} from '../lib/i18n'
 import {GROUPED_POSTS_PREFIX} from '../utils/const'
-
-interface TitleShortenerOptions {
-  characters?: number
-  ellipsis?: boolean
-}
-
-const titleShortener = (title: string, options: TitleShortenerOptions = {}) => {
-  const {characters = 10, ellipsis = true} = options
-  return title.length > characters ? `${title.slice(0, characters)}${ellipsis ? '...' : ''}` : title
-}
+import {titleShortener} from '../utils/title-shortener'
 
 const apiVersion = process.env.SANITY_STUDIO_API_VERSION || '2025-03-12'
 const SELECTED_POST_QUERY = `*[_id == $postId][0]{translationGroup, title}`
