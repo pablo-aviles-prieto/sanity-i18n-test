@@ -15,8 +15,9 @@ export const structure: StructureResolver = (S) => {
       S.listItem()
         .title('Posts')
         .icon(DocumentsIcon)
-        .child((id, opts) => {
-          return S.documentList()
+        .child(
+          S.documentList()
+            .id('english-posts-pane')
             .title('Grouped Posts (english titles)')
             .schemaType('post')
             .filter('_type == "post" && language == "en"')
@@ -27,21 +28,38 @@ export const structure: StructureResolver = (S) => {
                 // .icon(DocumentsIcon)
                 .intent({
                   type: 'create',
-                  params: {
-                    type: 'post-en',
-                    template: 'post-en',
-                  },
+                  params: [
+                    {type: 'post', template: `${GROUPED_POSTS_PREFIX}-en`},
+                    {createEnglishPost: true},
+                  ],
                 }),
             ])
-            .canHandleIntent((intent, params) => {
-              if (intent === 'create') return false // Prevents opening the child pane and opens the creation post pane
+            .canHandleIntent((intent, params, ctx) => {
+              /*
+               ** Let the child handle the creation intent, so it checks if the user is just
+               ** navigating through the post list or is attempting to create a new post
+               */
               return true
             })
-            .child(async (postId, {structureContext}) => {
+            .child(async (postId, {structureContext, ...rest}) => {
+              const payload = (rest as any).payload as Record<string, any> | undefined
+
               const selectedPostData = await structureContext
                 .getClient({apiVersion})
+                // .fetch(SELECTED_POST_QUERY, {postId, _ts: Date.now()}, {useCdn: false})
                 .fetch(SELECTED_POST_QUERY, {postId})
-              const translationGroupId = selectedPostData?.translationGroup
+              // console.log('selectedPostData', selectedPostData)
+              // console.log('payload', payload)
+
+              if (!selectedPostData && payload?.createEnglishPost) {
+                return S.document()
+                  .schemaType('post')
+                  .initialValueTemplate(`${GROUPED_POSTS_PREFIX}-en`)
+                // return S.document().documentId(`new-post-${Date.now()}`).schemaType('post')
+              }
+
+              const translationGroupId =
+                selectedPostData?.translationGroup ?? payload?.translationGroup
 
               const languagePosts = await structureContext
                 .getClient({apiVersion})
@@ -58,7 +76,7 @@ export const structure: StructureResolver = (S) => {
                       type: 'create',
                       params: [
                         {type: 'post', template: `${GROUPED_POSTS_PREFIX}-${lang.locale}`},
-                        {translationGroup: translationGroupId},
+                        {translationGroup: translationGroupId ?? ''},
                       ],
                     })
                 })
@@ -69,10 +87,20 @@ export const structure: StructureResolver = (S) => {
                 )
                 .schemaType('post')
                 .filter('_type == "post" && translationGroup == $translationGroup')
-                .params({translationGroup: translationGroupId})
+                .params({translationGroup: translationGroupId ?? ''})
                 .menuItems(menuItems)
-            })
-        }),
+                .canHandleIntent((intent, params, ctx) => {
+                  if (intent === 'create' && params.template === `${GROUPED_POSTS_PREFIX}-en`) {
+                    return false
+                  }
+                  /*
+                   ** Let the child handle the creation intent, so it checks if the user is just
+                   ** navigating through the post list or is attempting to create a new post
+                   */
+                  return true
+                })
+            }),
+        ),
 
       S.divider(),
       S.documentTypeListItem('author').title('Authors').icon(UsersIcon),

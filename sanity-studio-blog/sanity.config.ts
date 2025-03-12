@@ -35,7 +35,13 @@ export default defineConfig({
 
   schema: {
     types: schemaTypes,
+    // Removing the post's templates and the translation metadata templates, using the custom ones
     templates: (prev) => {
+      const filteredTemplates = prev.filter(
+        (template) =>
+          !template.id.startsWith('post') && !template.id.startsWith('translation.metadata'),
+      )
+
       const grouppedPostsTemplates: Template<any, any>[] = locales.map((lang) => ({
         id: `${GROUPED_POSTS_PREFIX}-${lang.locale}`,
         title: `New ${lang.title} post`,
@@ -48,7 +54,7 @@ export default defineConfig({
         },
       }))
 
-      return [...prev, ...grouppedPostsTemplates]
+      return [...filteredTemplates, ...grouppedPostsTemplates]
     },
   },
 
