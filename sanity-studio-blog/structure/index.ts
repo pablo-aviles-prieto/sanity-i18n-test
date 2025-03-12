@@ -1,6 +1,7 @@
 import {DocumentsIcon, TagsIcon, UsersIcon} from '@sanity/icons'
 import {StructureResolver} from 'sanity/structure'
 import {locales} from '../lib/i18n'
+import {GROUPED_POSTS_PREFIX} from '../utils/const'
 
 interface TitleShortenerOptions {
   characters?: number
@@ -65,7 +66,7 @@ export const structure: StructureResolver = (S) => {
                     .intent({
                       type: 'create',
                       params: [
-                        {type: 'post', template: `grouped-post-${lang.locale}`},
+                        {type: 'post', template: `${GROUPED_POSTS_PREFIX}-${lang.locale}`},
                         {translationGroup: translationGroupId},
                       ],
                     })

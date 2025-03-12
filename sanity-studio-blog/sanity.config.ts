@@ -7,6 +7,7 @@ import {BellIcon} from '@sanity/icons'
 import {structure} from './structure'
 import {locales} from './lib/i18n'
 import {v4 as uuidv4} from 'uuid'
+import {GROUPED_POSTS_PREFIX} from './utils/const'
 
 // Environment variables for project configuration
 const projectId = process.env.SANITY_STUDIO_PROJECT_ID || ''
@@ -36,7 +37,7 @@ export default defineConfig({
     types: schemaTypes,
     templates: (prev) => {
       const grouppedPostsTemplates: Template<any, any>[] = locales.map((lang) => ({
-        id: `grouped-post-${lang.locale}`,
+        id: `${GROUPED_POSTS_PREFIX}-${lang.locale}`,
         title: `New ${lang.title} post`,
         schemaType: 'post',
         value: (params: Record<string, any>) => {
