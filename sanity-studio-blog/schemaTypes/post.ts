@@ -1,12 +1,12 @@
 import {defineField, defineType} from 'sanity'
-import {DocumentIcon} from '@sanity/icons'
+import {BinaryDocumentIcon} from '@sanity/icons'
 import {v4 as uuidv4} from 'uuid'
 
 export default defineType({
   name: 'post',
   title: 'Post',
   type: 'document',
-  icon: DocumentIcon,
+  icon: BinaryDocumentIcon,
   fields: [
     defineField({
       name: 'title',
@@ -73,10 +73,15 @@ export default defineType({
       title: 'title',
       author: 'author.name',
       media: 'mainImage',
+      language: 'language',
     },
     prepare(selection) {
-      const {author} = selection
-      return {...selection, subtitle: author && `by ${author}`}
+      const {author, language, title} = selection
+      return {
+        ...selection,
+        title: `${title} (${language.toUpperCase()})`,
+        subtitle: author && `by ${author})`,
+      }
     },
   },
 })
