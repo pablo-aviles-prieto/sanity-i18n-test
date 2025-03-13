@@ -52,16 +52,12 @@ export const structure: StructureResolver = (S) => {
 
               const selectedPostData = await structureContext
                 .getClient({apiVersion})
-                // .fetch(SELECTED_POST_QUERY, {postId, _ts: Date.now()}, {useCdn: false})
                 .fetch(SELECTED_POST_QUERY, {postId})
-              // console.log('selectedPostData', selectedPostData)
-              // console.log('payload', payload)
 
               if (!selectedPostData && payload?.createEnglishPost) {
                 return S.document()
                   .schemaType('post')
                   .initialValueTemplate(`${GROUPED_POSTS_PREFIX}-en`)
-                // return S.document().documentId(`new-post-${Date.now()}`).schemaType('post')
               }
 
               const translationGroupId =
