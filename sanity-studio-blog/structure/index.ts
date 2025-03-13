@@ -40,19 +40,12 @@ export const structure: StructureResolver = (S) => {
                   ],
                 }),
             ])
-            .canHandleIntent((intent, params, ctx) => {
-              /*
-               ** Let the child handle the creation intent, so it checks if the user is just
-               ** navigating through the post list or is attempting to create a new post
-               */
-              return true
-            })
+            .canHandleIntent(() => true)
             .child(async (postId, {structureContext, ...rest}) => {
               const payload = (rest as any).payload as Record<string, any> | undefined
 
               const selectedPostData = await structureContext
                 .getClient({apiVersion})
-                // .fetch(SELECTED_POST_QUERY, {postId, _ts: Date.now()}, {useCdn: false})
                 .fetch(SELECTED_POST_QUERY, {postId})
               // console.log('selectedPostData', selectedPostData)
               // console.log('payload', payload)
@@ -61,7 +54,6 @@ export const structure: StructureResolver = (S) => {
                 return S.document()
                   .schemaType('post')
                   .initialValueTemplate(`${GROUPED_POSTS_PREFIX}-en`)
-                // return S.document().documentId(`new-post-${Date.now()}`).schemaType('post')
               }
 
               const translationGroupId =

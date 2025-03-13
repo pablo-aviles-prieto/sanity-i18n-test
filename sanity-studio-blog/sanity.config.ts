@@ -8,6 +8,8 @@ import {structure} from './structure'
 import {locales} from './lib/i18n'
 import {v4 as uuidv4} from 'uuid'
 import {GROUPED_POSTS_PREFIX} from './utils/const'
+import {enhancedPublishPostAction} from './utils/enhanced-publish-post-action'
+import {enhancedDeletePostAction} from './utils/enhanced-delete-post-action'
 
 // Environment variables for project configuration
 const projectId = process.env.SANITY_STUDIO_PROJECT_ID || ''
@@ -66,6 +68,20 @@ export default defineConfig({
         // Remove all the documents and display it in the structure builder
         return []
       }
+      return prev
+    },
+    actions: (prev, ctx) => {
+      // When editing or creating a post
+      if (ctx.schemaType === 'post' && ctx.versionType === 'draft') {
+        return prev.map((originalAction) =>
+          originalAction.action === 'publish'
+            ? enhancedPublishPostAction(originalAction)
+            : originalAction.action === 'delete'
+              ? enhancedDeletePostAction(originalAction)
+              : originalAction,
+        )
+      }
+
       return prev
     },
   },
