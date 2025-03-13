@@ -21,6 +21,12 @@ export const structure: StructureResolver = (S) => {
             .title('Grouped Posts (english titles)')
             .schemaType('post')
             .filter('_type == "post" && language == "en"')
+            // .initialValueTemplates([
+            //   S.initialValueTemplateItem(`${GROUPED_POSTS_PREFIX}-en`, {
+            //     id: `${GROUPED_POSTS_PREFIX}-en`,
+            //     language: 'en',
+            //   }),
+            // ])
             .menuItems([
               // Add a custom menu item that creates English posts only
               S.menuItem()
@@ -63,10 +69,12 @@ export const structure: StructureResolver = (S) => {
 
               const languagePosts = await structureContext
                 .getClient({apiVersion})
-                .fetch(POSTS_UNDER_TRANSLATION_GROUP_QUERY, {translationGroup: translationGroupId})
-              const existingLanguages: string[] = languagePosts.map(
-                (post: Record<string, string>) => post.language,
-              )
+                .fetch<
+                  Promise<Array<Record<string, string>>>
+                >(POSTS_UNDER_TRANSLATION_GROUP_QUERY, {
+                  translationGroup: translationGroupId ?? '',
+                })
+              const existingLanguages = languagePosts.map((post) => post.language)
               const menuItems = locales
                 .filter((lang) => !existingLanguages.includes(lang.locale))
                 .map((lang) => {

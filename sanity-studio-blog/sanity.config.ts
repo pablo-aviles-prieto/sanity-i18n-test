@@ -21,6 +21,7 @@ export default defineConfig({
   dataset,
 
   plugins: [
+    // structureTool(),
     structureTool({structure}),
     visionTool(),
     documentInternationalization({
