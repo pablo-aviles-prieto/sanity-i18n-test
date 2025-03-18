@@ -18,7 +18,7 @@ export const Header = () => {
   };
 
   return (
-    <section className='w-full absolute min-h-12 px-10 flex justify-end items-center z-10'>
+    <section className='w-full absolute min-h-12 px-10 flex justify-end items-center z-50'>
       <div className='flex gap-x-4'>
         {locales.map(lang => (
           <button
