@@ -51,7 +51,7 @@ body {
   position: fixed;
   inset: 0;
   background-color: transparent;
-  z-index: 9999;
+  z-index: 1;
   pointer-events: none;
   opacity: 1;
 }
@@ -61,7 +61,7 @@ body {
   animation: cover-screen 1s ease-in-out forwards;
   width: 100vw;
   height: 100vh;
-  z-index: 9999;
+  z-index: 1;
 }
 
 /* ::view-transition-old(page) {

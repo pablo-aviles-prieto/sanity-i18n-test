@@ -29,9 +29,17 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Skip all internal paths (_next)
-    '/((?!_next).*)',
+    // Skip internal paths (_next) and static files (assets, images, fonts, etc.)
+    '/((?!_next|assets|images|fonts|favicon.ico).*)',
     // Optional: only run on root (/) URL
     // '/'
   ],
 };
+// export const config = {
+//   matcher: [
+//     // Skip all internal paths (_next)
+//     '/((?!_next).*)',
+//     // Optional: only run on root (/) URL
+//     // '/'
+//   ],
+// };

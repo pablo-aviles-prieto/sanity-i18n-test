@@ -20,7 +20,8 @@ export const PageTransitionWrapper = ({ children }: Readonly<{ children: React.R
   return (
     <ViewTransition name='page'>
       <div />
-      <main className='pt-14'>{delayedChildren}</main>
+      {/* {delayedChildren} */}
+      <main>{delayedChildren}</main>
     </ViewTransition>
   );
 };

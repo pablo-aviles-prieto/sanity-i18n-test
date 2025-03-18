@@ -29,7 +29,7 @@ export default async function PostPage({
   if (!post) return <div>No post</div>;
 
   return (
-    <main className='container mx-auto max-w-3xl p-8 flex flex-col gap-4'>
+    <main className='container mx-auto max-w-3xl p-8 flex flex-col gap-4 pt-14'>
       <Link href='/' className='hover:underline'>
         ← Back to posts
       </Link>
