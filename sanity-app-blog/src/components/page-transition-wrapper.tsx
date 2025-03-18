@@ -1,35 +1,26 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { useEffect, useState, useTransition, unstable_useSwipeTransition } from 'react';
+import { useEffect, useState } from 'react';
 import { unstable_ViewTransition as ViewTransition } from 'react';
 
 export const PageTransitionWrapper = ({ children }: Readonly<{ children: React.ReactNode }>) => {
-  // const pathname = usePathname();
-  // const [isTransitioning, setIsTransitioning] = useState(false);
-  // const transition = useTransition();
+  const pathname = usePathname();
+  const [delayedChildren, setDelayedChildren] = useState<React.ReactNode>(null);
 
-  // // Trigger transition when pathname changes
-  // useEffect(() => {
-  //   setIsTransitioning(true);
-  //   const timer = setTimeout(() => {
-  //     setIsTransitioning(false);
-  //   }, 1200);
+  useEffect(() => {
+    setDelayedChildren(null);
+    const timeout = setTimeout(() => {
+      setDelayedChildren(children);
+    }, 400);
 
-  //   return () => clearTimeout(timer);
-  // }, [pathname]);
+    return () => clearTimeout(timeout);
+  }, [children, pathname]);
 
   return (
-    <>
-      <ViewTransition name='page'>
-        <div className='view-transition-background' />
-        {/* {isTransitioning && <div className='view-transition-background' />} */}
-        {children}
-      </ViewTransition>
-    </>
-    // <>
-    //   {isTransitioning && <div className='view-transition-background' />}
-    //   {children}
-    // </>
+    <ViewTransition name='page'>
+      <div />
+      <main className='pt-14'>{delayedChildren}</main>
+    </ViewTransition>
   );
 };

@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import '../globals.css';
 import { Header } from '@/components/header';
-import { unstable_ViewTransition as ViewTransition } from 'react';
+import { PageTransitionWrapper } from '@/components/page-transition-wrapper';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -30,10 +30,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased relative min-h-screen`}
       >
         <Header />
-        <ViewTransition name='page'>
-          <div />
-          <main className='pt-14'>{children}</main>
-        </ViewTransition>
+        <PageTransitionWrapper>{children}</PageTransitionWrapper>
       </body>
     </html>
   );
