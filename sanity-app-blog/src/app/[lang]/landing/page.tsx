@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 'use client';
 
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion, useScroll, useTransform } from 'motion/react';
 
 type SlideView = {
@@ -17,6 +17,24 @@ const slideViews: SlideView[] = [
 
 export default function LandingPage() {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [viewportWidth, setViewportWidth] = useState(0);
+  // const [viewportHeight, setViewportHeight] = useState(0);
+
+  useEffect(() => {
+    const updateViewport = () => {
+      console.log('window', window);
+      setViewportWidth(window.innerWidth);
+      // setViewportHeight(window.innerHeight);
+    };
+
+    // Set the initial viewport size
+    updateViewport();
+
+    // Listen for resize events to update the viewport size dynamically
+    window.addEventListener('resize', updateViewport);
+    return () => window.removeEventListener('resize', updateViewport);
+  }, []);
+
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ['start start', 'end end'],
@@ -26,14 +44,18 @@ export default function LandingPage() {
   const logoHeight = useTransform(scrollYProgress, [0, 0.15], ['50rem', '10rem']);
 
   // Translate the whole slides container
-  const totalWidth = 56 * slideViews.length; // Each slide is 56rem
-  const xTranslate = useTransform(scrollYProgress, [0, 1], [`100vw`, `-${totalWidth}rem`]);
+  const slidesTotalWidthPx = 868 * slideViews.length; // Each slide is 868px
+  const xTranslate = useTransform(
+    scrollYProgress,
+    [0, 1],
+    [`${viewportWidth}px`, `-${slidesTotalWidthPx}px`]
+  );
 
   return (
-    <div ref={containerRef} className='relative h-[500vh]'>
+    <div ref={containerRef} className='relative h-[600vh]'>
       {/* Fixed header with logo */}
       <motion.div
-        className='fixed top-0 left-8 w-full pt-14 z-10 mix-blend-difference'
+        className='fixed w-screen top-0 left-8 pt-14 z-10 mix-blend-difference'
         style={{ height: logoHeight }}
       >
         <motion.img
@@ -45,7 +67,7 @@ export default function LandingPage() {
 
       {/* Horizontal scroll container */}
       <div className='sticky top-0 h-screen w-full overflow-hidden flex items-center'>
-        <motion.div className='flex w-[300vw]' style={{ x: xTranslate }}>
+        <motion.div className='flex' style={{ x: xTranslate }}>
           {slideViews.map(slide => (
             <SlideView key={slide.name} {...slide} />
           ))}
@@ -57,7 +79,7 @@ export default function LandingPage() {
 
 function SlideView({ name, photoPath }: SlideView) {
   return (
-    <div className='border-l border-white h-screen w-[55rem] flex-shrink-0 bg-black flex items-center justify-center'>
+    <div className='border-l border-white h-screen w-[868px] flex-shrink-0 bg-black flex items-center justify-center'>
       {photoPath ? (
         <img src={photoPath} alt={name} className='w-full h-full object-cover' />
       ) : (
