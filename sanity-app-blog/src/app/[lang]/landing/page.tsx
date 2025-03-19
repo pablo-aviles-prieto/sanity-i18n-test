@@ -2,29 +2,35 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { motion, useScroll, useTransform } from 'motion/react';
+import { motion, useScroll, useTransform, useMotionValueEvent, MotionValue } from 'motion/react';
 
 type SlideView = {
   name: string;
   photoPath: string | null;
+  bgColor: string;
 };
 
-const slideViews: SlideView[] = [
-  { name: 'Irving penn: Centennial', photoPath: '/assets/irving-penn-centenial.jpg' },
-  { name: 'The talks', photoPath: null },
-  { name: 'The bookstore', photoPath: null },
-];
+const SLIDE_WIDTH_IN_PX = 868;
+const PEEK_PERCENTAGE = 0.2; // 10% peek
 
 export default function LandingPage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [viewportWidth, setViewportWidth] = useState(0);
-  // const [viewportHeight, setViewportHeight] = useState(0);
+  const [scrollPercentProgress, setScrollProgress] = useState(0); // Track raw scroll progress
+
+  const slideViews: SlideView[] = [
+    {
+      name: 'Irving penn: Centennial',
+      photoPath: '/assets/irving-penn-centenial.jpg',
+      bgColor: 'red',
+    },
+    { name: 'The talks', photoPath: null, bgColor: 'olive' },
+    // { name: 'The bookstore', photoPath: null, bgColor: 'green' },
+  ];
 
   useEffect(() => {
     const updateViewport = () => {
-      console.log('window', window);
       setViewportWidth(window.innerWidth);
-      // setViewportHeight(window.innerHeight);
     };
 
     // Set the initial viewport size
@@ -40,23 +46,22 @@ export default function LandingPage() {
     offset: ['start start', 'end end'],
   });
 
-  // Transform logo height from full height to small as scroll progresses
-  const logoHeight = useTransform(scrollYProgress, [0, 0.15], ['50rem', '10rem']);
+  useMotionValueEvent(scrollYProgress, 'change', latest => {
+    setScrollProgress(latest);
+  });
 
-  // Translate the whole slides container
-  const slidesTotalWidthPx = 868 * slideViews.length; // Each slide is 868px
-  const xTranslate = useTransform(
-    scrollYProgress,
-    [0, 1],
-    [`${viewportWidth}px`, `-${slidesTotalWidthPx}px`]
-  );
+  const dynamicLogoHeight = useTransform(scrollYProgress, [0, 0.15], ['50rem', '10rem']);
+
+  const slidesTotalWidthPx = SLIDE_WIDTH_IN_PX * slideViews.length; // Each slide is 868px
+  const totalScrollablePx = slidesTotalWidthPx + viewportWidth * 2;
+  const scrolledPixels = scrollPercentProgress * totalScrollablePx;
 
   return (
     <div ref={containerRef} className='relative h-[600vh]'>
       {/* Fixed header with logo */}
       <motion.div
-        className='fixed w-screen top-0 left-8 pt-14 z-10 mix-blend-difference'
-        style={{ height: logoHeight }}
+        className='fixed w-screen top-0 pl-14 pt-14 z-10 mix-blend-difference'
+        style={{ height: dynamicLogoHeight }}
       >
         <motion.img
           src='/assets/mop.svg'
@@ -66,25 +71,101 @@ export default function LandingPage() {
       </motion.div>
 
       {/* Horizontal scroll container */}
-      <div className='sticky top-0 h-screen w-full overflow-hidden flex items-center'>
-        <motion.div className='flex' style={{ x: xTranslate }}>
-          {slideViews.map(slide => (
-            <SlideView key={slide.name} {...slide} />
-          ))}
-        </motion.div>
+      <div className='sticky top-0 h-screen w-full overflow-hidden'>
+        {slideViews.map((slide, i) => (
+          <SlideView
+            key={slide.name}
+            {...slide}
+            index={i}
+            totalSlides={slideViews.length}
+            scrollPercentProgress={scrollPercentProgress}
+            scrollYProgress={scrollYProgress}
+            totalScrollablePx={totalScrollablePx}
+            slidesTotalWidthPx={slidesTotalWidthPx}
+            scrolledPixels={scrolledPixels}
+            viewportWidth={viewportWidth}
+          />
+        ))}
       </div>
     </div>
   );
 }
 
-function SlideView({ name, photoPath }: SlideView) {
+interface SlideProps extends SlideView {
+  index: number;
+  viewportWidth: number;
+  scrolledPixels: number;
+  scrollPercentProgress: number;
+  slidesTotalWidthPx: number;
+  totalSlides: number;
+  totalScrollablePx: number;
+  scrollYProgress: MotionValue<number>;
+}
+
+function SlideView({
+  name,
+  photoPath,
+  index,
+  viewportWidth,
+  scrolledPixels,
+  scrollPercentProgress,
+  scrollYProgress,
+  slidesTotalWidthPx,
+  totalScrollablePx,
+  bgColor,
+  totalSlides,
+}: SlideProps) {
+  const percentAssignedBySlide = 0.25;
+  // const peekPercentagePerAssignedPercent = percentAssignedBySlide * PEEK_PERCENTAGE;
+  const totalTranslatePixelsPerSlide = viewportWidth + SLIDE_WIDTH_IN_PX;
+  const slidePeekPixels = PEEK_PERCENTAGE * SLIDE_WIDTH_IN_PX;
+
+  const slidePeekPercentageOfTotalScroll = slidePeekPixels / totalScrollablePx;
+  const slidePercentageOfSectionSlideScroll = SLIDE_WIDTH_IN_PX / totalScrollablePx;
+
+  const percentEquivalent = totalTranslatePixelsPerSlide / totalScrollablePx;
+  const testv2 = slidePercentageOfSectionSlideScroll - slidePeekPercentageOfTotalScroll;
+  console.log('percentEquivalent', percentEquivalent);
+  console.log('testv2', testv2);
+
+  const translate =
+    index === 0
+      ? {
+          input: [0, percentAssignedBySlide],
+          output: [0, -totalTranslatePixelsPerSlide],
+        }
+      : {
+          input: [
+            0,
+            0 + slidePeekPercentageOfTotalScroll,
+            0 + slidePeekPercentageOfTotalScroll * 2,
+            0 + testv2,
+            testv2 + percentAssignedBySlide - slidePeekPercentageOfTotalScroll,
+          ],
+          output: [0, 0, -slidePeekPixels, -slidePeekPixels, -totalTranslatePixelsPerSlide],
+        };
+  console.log('translate', index, translate.input, translate.output);
+  console.log('scrollPercentProgress', scrollPercentProgress);
+  // console.log('slidePercentageOfSectionSlideScroll', slidePercentageOfSectionSlideScroll);
+
+  const translateX = useTransform(scrollYProgress, translate.input, translate.output);
+
   return (
-    <div className='border-l border-white h-screen w-[868px] flex-shrink-0 bg-black flex items-center justify-center'>
+    <motion.div
+      className='absolute border-l border-white h-screen flex items-center justify-center'
+      style={{
+        left: `${viewportWidth}px`,
+        backgroundColor: bgColor,
+        x: translateX,
+        zIndex: 10 + index,
+        width: SLIDE_WIDTH_IN_PX,
+      }}
+    >
       {photoPath ? (
         <img src={photoPath} alt={name} className='w-full h-full object-cover' />
       ) : (
         <h1 className='text-white text-4xl'>{name}</h1>
       )}
-    </div>
+    </motion.div>
   );
 }
