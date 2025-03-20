@@ -10,13 +10,15 @@ type SlideView = {
   bgColor: string;
 };
 
+// viewportWidth test = 1391
 const SLIDE_WIDTH_IN_PX = 868;
-const PEEK_PERCENTAGE = 0.2; // 10% peek
+const PEEK_PERCENTAGE = 0.1;
 
 export default function LandingPage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [viewportWidth, setViewportWidth] = useState(0);
   const [scrollPercentProgress, setScrollProgress] = useState(0); // Track raw scroll progress
+  console.log('viewportWidth', viewportWidth);
 
   const slideViews: SlideView[] = [
     {
@@ -52,9 +54,12 @@ export default function LandingPage() {
 
   const dynamicLogoHeight = useTransform(scrollYProgress, [0, 0.15], ['50rem', '10rem']);
 
-  const slidesTotalWidthPx = SLIDE_WIDTH_IN_PX * slideViews.length; // Each slide is 868px
-  const totalScrollablePx = slidesTotalWidthPx + viewportWidth * 2;
-  const scrolledPixels = scrollPercentProgress * totalScrollablePx;
+  const percentAssignedBySlide = 1 / slideViews.length;
+  const totalScrollablePx = SLIDE_WIDTH_IN_PX * slideViews.length;
+
+  // const scrolledPixels = scrollPercentProgress * totalScrollablePx;
+  console.log('scrollYProgress.get()', scrollYProgress.get());
+  console.log('scrollPercentProgress', scrollPercentProgress);
 
   return (
     <div ref={containerRef} className='relative h-[600vh]'>
@@ -77,12 +82,13 @@ export default function LandingPage() {
             key={slide.name}
             {...slide}
             index={i}
-            totalSlides={slideViews.length}
+            percentAssignedBySlide={percentAssignedBySlide}
+            // totalSlides={slideViews.length}
             scrollPercentProgress={scrollPercentProgress}
             scrollYProgress={scrollYProgress}
             totalScrollablePx={totalScrollablePx}
-            slidesTotalWidthPx={slidesTotalWidthPx}
-            scrolledPixels={scrolledPixels}
+            // slidesTotalWidthPx={slidesTotalWidthPx}
+            // scrolledPixels={scrolledPixels}
             viewportWidth={viewportWidth}
           />
         ))}
@@ -94,11 +100,12 @@ export default function LandingPage() {
 interface SlideProps extends SlideView {
   index: number;
   viewportWidth: number;
-  scrolledPixels: number;
+  // scrolledPixels: number;
   scrollPercentProgress: number;
-  slidesTotalWidthPx: number;
-  totalSlides: number;
+  // slidesTotalWidthPx: number;
+  // totalSlides: number;
   totalScrollablePx: number;
+  percentAssignedBySlide: number;
   scrollYProgress: MotionValue<number>;
 }
 
@@ -107,47 +114,43 @@ function SlideView({
   photoPath,
   index,
   viewportWidth,
-  scrolledPixels,
+  // scrolledPixels,
   scrollPercentProgress,
   scrollYProgress,
-  slidesTotalWidthPx,
+  // slidesTotalWidthPx,
+  // totalSlides,
+  percentAssignedBySlide,
   totalScrollablePx,
   bgColor,
-  totalSlides,
 }: SlideProps) {
-  const percentAssignedBySlide = 0.25;
-  // const peekPercentagePerAssignedPercent = percentAssignedBySlide * PEEK_PERCENTAGE;
-  const totalTranslatePixelsPerSlide = viewportWidth + SLIDE_WIDTH_IN_PX;
-  const slidePeekPixels = PEEK_PERCENTAGE * SLIDE_WIDTH_IN_PX;
+  const totalPixelsMovedPerSlide = viewportWidth + SLIDE_WIDTH_IN_PX;
 
-  const slidePeekPercentageOfTotalScroll = slidePeekPixels / totalScrollablePx;
-  const slidePercentageOfSectionSlideScroll = SLIDE_WIDTH_IN_PX / totalScrollablePx;
-
-  const percentEquivalent = totalTranslatePixelsPerSlide / totalScrollablePx;
-  const testv2 = slidePercentageOfSectionSlideScroll - slidePeekPercentageOfTotalScroll;
-  console.log('percentEquivalent', percentEquivalent);
-  console.log('testv2', testv2);
+  const slidePercentBasedOnHisOwnTranslate = SLIDE_WIDTH_IN_PX / totalPixelsMovedPerSlide;
+  const extrapolatedSlidePercent = slidePercentBasedOnHisOwnTranslate * percentAssignedBySlide;
+  const percentOfSlideExtrapolated = extrapolatedSlidePercent * PEEK_PERCENTAGE;
 
   const translate =
     index === 0
       ? {
           input: [0, percentAssignedBySlide],
-          output: [0, -totalTranslatePixelsPerSlide],
+          output: [0, -totalPixelsMovedPerSlide],
         }
       : {
           input: [
-            0,
-            0 + slidePeekPercentageOfTotalScroll,
-            0 + slidePeekPercentageOfTotalScroll * 2,
-            0 + testv2,
-            testv2 + percentAssignedBySlide - slidePeekPercentageOfTotalScroll,
+            percentOfSlideExtrapolated,
+            percentOfSlideExtrapolated * 2,
+            extrapolatedSlidePercent + percentOfSlideExtrapolated,
+            percentAssignedBySlide + extrapolatedSlidePercent,
           ],
-          output: [0, 0, -slidePeekPixels, -slidePeekPixels, -totalTranslatePixelsPerSlide],
+          output: [
+            0,
+            -(SLIDE_WIDTH_IN_PX * PEEK_PERCENTAGE),
+            -(SLIDE_WIDTH_IN_PX * PEEK_PERCENTAGE),
+            -totalPixelsMovedPerSlide,
+          ],
         };
-  console.log('translate', index, translate.input, translate.output);
-  console.log('scrollPercentProgress', scrollPercentProgress);
-  // console.log('slidePercentageOfSectionSlideScroll', slidePercentageOfSectionSlideScroll);
 
+  console.log('translate', index, translate.input, translate.output);
   const translateX = useTransform(scrollYProgress, translate.input, translate.output);
 
   return (
@@ -162,9 +165,43 @@ function SlideView({
       }}
     >
       {photoPath ? (
-        <img src={photoPath} alt={name} className='w-full h-full object-cover' />
+        <div className='w-full h-full relative'>
+          <img src={photoPath} alt={name} className='w-full h-full object-cover' />
+          <div className='absolute top-0 left-0 text-red-200 text-left text-xs'>
+            {(scrollYProgress.get() * 100).toFixed(2)}%
+            <br />
+            {translateX.get().toFixed(0)}px
+          </div>
+          <div className='absolute top-0 left-1/2 text-red-200 text-left text-xs'>
+            {(scrollYProgress.get() * 100).toFixed(2)}%
+            <br />
+            {translateX.get().toFixed(0)}px
+          </div>
+          <div className='absolute top-0 right-0 text-red-200 text-left text-xs'>
+            {(scrollYProgress.get() * 100).toFixed(2)}%
+            <br />
+            {translateX.get().toFixed(0)}px
+          </div>
+        </div>
       ) : (
-        <h1 className='text-white text-4xl'>{name}</h1>
+        <div className='w-full h-full text-center relative'>
+          {/* <h1 className='text-white text-4xl'>{name}</h1> */}
+          <div className='absolute top-0 left-0 text-white text-left text-xs'>
+            {(scrollYProgress.get() * 100).toFixed(2)}%
+            <br />
+            {translateX.get().toFixed(0)}px
+          </div>
+          <div className='absolute top-0 left-1/2 text-white text-left text-xs'>
+            {(scrollYProgress.get() * 100).toFixed(2)}%
+            <br />
+            {translateX.get().toFixed(0)}px
+          </div>
+          <div className='absolute top-0 right-0 text-white text-left text-xs'>
+            {(scrollYProgress.get() * 100).toFixed(2)}%
+            <br />
+            {translateX.get().toFixed(0)}px
+          </div>
+        </div>
       )}
     </motion.div>
   );
