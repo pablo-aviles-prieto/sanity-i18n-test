@@ -12,6 +12,7 @@ type SlideView = {
 
 const SLIDE_WIDTH_IN_PX = 868;
 const PEEK_PERCENTAGE = 0.1;
+const PX_HEIGHT_ASSIGNED_PER_SLIDE = 500;
 
 export default function LandingPage() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -25,11 +26,11 @@ export default function LandingPage() {
       bgColor: 'red',
     },
     { name: 'The talks', photoPath: null, bgColor: 'olive' },
-    { name: 'The bookstore', photoPath: null, bgColor: 'green' },
-    { name: 'The bookstore v2', photoPath: null, bgColor: 'blueviolet' },
-    { name: 'The bookstore v3', photoPath: null, bgColor: 'brown' },
-    { name: 'The bookstore v4', photoPath: null, bgColor: 'darkblue' },
-    { name: 'The bookstore v5', photoPath: null, bgColor: 'darkorange' },
+    // { name: 'The bookstore', photoPath: null, bgColor: 'green' },
+    // { name: 'The bookstore v2', photoPath: null, bgColor: 'blueviolet' },
+    // { name: 'The bookstore v3', photoPath: null, bgColor: 'brown' },
+    // { name: 'The bookstore v4', photoPath: null, bgColor: 'darkblue' },
+    // { name: 'The bookstore v5', photoPath: null, bgColor: 'darkorange' },
   ];
 
   const enhancedViews: SlideView[] = [
@@ -54,9 +55,22 @@ export default function LandingPage() {
     return () => window.removeEventListener('resize', updateViewport);
   }, []);
 
+  /*
+   ** There are some edge cases because the sneak peek animation of each slide
+   ** provokes that each slide initiates and end much earlier than his assigned
+   ** percentage of the scroll area. So the scroll animation finishes before the
+   ** scroll reaches the end
+   **
+   ** To fix this, we have to tweak the offset end of the useScroll, having in mind that
+   ** for more quantity of slides, the offset end should be higher since it increments
+   ** the total scrollable area unused
+   */
   const { scrollYProgress } = useScroll({
     target: containerRef,
-    offset: ['start start', 'end end'],
+    offset: [
+      'start start',
+      slideViews.length > 2 ? `end ${PX_HEIGHT_ASSIGNED_PER_SLIDE}px` : 'end end',
+    ],
   });
 
   // TODO: Remove it, used for debugging since it triggers the remount on the children
@@ -67,14 +81,20 @@ export default function LandingPage() {
   const dynamicLogoHeight = useTransform(scrollYProgress, [0, 0.15], ['50rem', '10rem']);
 
   const percentAssignedBySlide = 1 / slideViews.length;
-  const totalScrollablePx = SLIDE_WIDTH_IN_PX * slideViews.length;
+  // const totalScrollablePx = SLIDE_WIDTH_IN_PX * slideViews.length;
 
   return (
     // Modify the height of the container to change the speed of the animation based on scroll
     <div
       ref={containerRef}
       className='relative'
-      style={{ height: `${Math.max(slideViews.length * 50, 150)}vh` }}
+      // style={{
+      //   height:
+      //     slideViews.length >= 2
+      //       ? `${slideViews.length * PX_HEIGHT_ASSIGNED_PER_SLIDE}px`
+      //       : '120vh',
+      // }}
+      style={{ height: `${Math.max(slideViews.length * 100, 150)}vh` }}
     >
       {/* Fixed header with logo */}
       <motion.div
@@ -99,7 +119,7 @@ export default function LandingPage() {
             totalSlides={enhancedViews.length}
             scrollPercentProgress={scrollPercentProgress}
             scrollYProgress={scrollYProgress}
-            totalScrollablePx={totalScrollablePx}
+            // totalScrollablePx={totalScrollablePx}
             // slidesTotalWidthPx={slidesTotalWidthPx}
             // scrolledPixels={scrolledPixels}
             viewportWidth={viewportWidth}
@@ -114,7 +134,7 @@ interface SlideProps extends SlideView {
   index: number;
   viewportWidth: number;
   scrollPercentProgress: number;
-  totalScrollablePx: number;
+  // totalScrollablePx: number;
   totalSlides: number;
   percentAssignedBySlide: number;
   scrollYProgress: MotionValue<number>;
@@ -123,16 +143,15 @@ interface SlideProps extends SlideView {
 function SlideView({
   name,
   photoPath,
+  bgColor,
   index,
   viewportWidth,
   // scrolledPixels,
   scrollPercentProgress,
   scrollYProgress,
-  // slidesTotalWidthPx,
   totalSlides,
   percentAssignedBySlide,
-  totalScrollablePx,
-  bgColor,
+  // totalScrollablePx,
 }: SlideProps) {
   const totalPixelsMovedPerSlide = viewportWidth + SLIDE_WIDTH_IN_PX;
   const slidePercentBasedOnHisOwnTranslate = SLIDE_WIDTH_IN_PX / totalPixelsMovedPerSlide;
@@ -140,57 +159,77 @@ function SlideView({
   const percentOfSlideExtrapolated = extrapolatedSlidePercent * PEEK_PERCENTAGE;
 
   const lastBreakpoint = (totalSlides - 1) * extrapolatedSlidePercent + percentAssignedBySlide;
+  console.log('percentAssignedBySlide', percentAssignedBySlide);
 
   // Lost percent that needs to be accounted for
   const totalAssigned = percentAssignedBySlide * totalSlides;
   const lostScrollPercent = totalAssigned - lastBreakpoint;
   const lostScrollPercentBySlide = lostScrollPercent / totalSlides;
-  console.log('lostScrollPercent', lostScrollPercent);
-  console.log('lostScrollPercentBySlide', lostScrollPercentBySlide);
 
   const baseOffset =
     index === 0
       ? lostScrollPercentBySlide
       : (index - 1) * extrapolatedSlidePercent + lostScrollPercentBySlide;
 
-  // const correctedPercentAssignedBySlide = (1 - totalLostScrollPercent) / totalSlides;
-
+  /*
+   ** There are some edge cases mainly because the sneak peek animation (mentioned earlier)
+   ** provokes that the animation is finished before the scroll reaches the 100% of the scroll animation container
+   ** This means, there are some tweaks in the offset of the useScroll, that provokes som edge cases in concrete
+   ** amount of slides.
+   ** Also the last slide (the form slide) has to be treated differently and checking is not being fucked up by
+   ** the tweaks on the useScroll hook
+   */
   const translate =
-    index === 0
+    totalSlides === 2 && index === 0 // Meaning only 1 slide plus form slide
       ? {
-          input: [lostScrollPercentBySlide, baseOffset + percentAssignedBySlide],
+          input: [0, percentAssignedBySlide],
           output: [0, -totalPixelsMovedPerSlide],
         }
-      : index !== totalSlides - 1
+      : index === 0 // First slide
         ? {
-            input: [
-              baseOffset + percentOfSlideExtrapolated,
-              baseOffset + percentOfSlideExtrapolated * 2,
-              baseOffset + extrapolatedSlidePercent + percentOfSlideExtrapolated,
-              baseOffset + percentAssignedBySlide + extrapolatedSlidePercent,
-            ],
-            output: [
-              0,
-              -(SLIDE_WIDTH_IN_PX * PEEK_PERCENTAGE),
-              -(SLIDE_WIDTH_IN_PX * PEEK_PERCENTAGE),
-              -totalPixelsMovedPerSlide,
-            ],
+            input: [lostScrollPercentBySlide, baseOffset + percentAssignedBySlide],
+            output: [0, -totalPixelsMovedPerSlide],
           }
-        : {
-            input: [lastBreakpoint, 1],
-            output: [0, -viewportWidth],
-          };
+        : index !== totalSlides - 1 // Any slide but last
+          ? {
+              input: [
+                baseOffset + percentOfSlideExtrapolated,
+                baseOffset + percentOfSlideExtrapolated * 2,
+                baseOffset + extrapolatedSlidePercent + percentOfSlideExtrapolated,
+                baseOffset + percentAssignedBySlide + extrapolatedSlidePercent,
+              ],
+              output: [
+                0,
+                -(SLIDE_WIDTH_IN_PX * PEEK_PERCENTAGE),
+                -(SLIDE_WIDTH_IN_PX * PEEK_PERCENTAGE),
+                -totalPixelsMovedPerSlide,
+              ],
+            }
+          : {
+              // Last slide (form slide)
+              input: [
+                totalSlides === 2
+                  ? percentOfSlideExtrapolated
+                  : baseOffset + percentOfSlideExtrapolated,
+                totalSlides === 2
+                  ? 1
+                  : baseOffset + percentAssignedBySlide + percentOfSlideExtrapolated,
+              ],
+              output: [0, -viewportWidth],
+            };
 
   console.log('translate', index, translate.input, translate.output);
+  console.log('scrollPercentProgress', scrollPercentProgress);
   const translateX = useTransform(scrollYProgress, translate.input, translate.output);
 
   if (index === totalSlides - 1) {
     return (
       <motion.div
-        className='absolute border-l border-white h-screen flex items-center justify-center z-[1]'
+        className='absolute w-screen border-l border-white h-screen flex items-center justify-center z-[1]'
         style={{
+          // left: 0,
           left: `${viewportWidth}px`,
-          backgroundColor: 'reddark',
+          backgroundColor: '#720000',
           x: translateX,
         }}
       >
