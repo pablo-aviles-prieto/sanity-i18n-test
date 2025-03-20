@@ -10,7 +10,6 @@ type SlideView = {
   bgColor: string;
 };
 
-// viewportWidth test = 1391
 const SLIDE_WIDTH_IN_PX = 868;
 const PEEK_PERCENTAGE = 0.1;
 
@@ -18,7 +17,6 @@ export default function LandingPage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [viewportWidth, setViewportWidth] = useState(0);
   const [scrollPercentProgress, setScrollProgress] = useState(0); // Track raw scroll progress
-  const totalPixelsMovedPerSlide = viewportWidth + SLIDE_WIDTH_IN_PX;
 
   const slideViews: SlideView[] = [
     {
@@ -33,12 +31,6 @@ export default function LandingPage() {
     { name: 'The bookstore v4', photoPath: null, bgColor: 'darkblue' },
     { name: 'The bookstore v5', photoPath: null, bgColor: 'darkorange' },
   ];
-
-  const totalHeight = viewportWidth
-    ? totalPixelsMovedPerSlide * slideViews.length
-    : window.innerHeight;
-  console.log('totalHeight', totalHeight);
-  console.log('viewportWidth', viewportWidth);
 
   useEffect(() => {
     const updateViewport = () => {
@@ -69,7 +61,8 @@ export default function LandingPage() {
   const totalScrollablePx = SLIDE_WIDTH_IN_PX * slideViews.length;
 
   return (
-    <div ref={containerRef} className='relative h-[600vh]'>
+    // Modify the height of the container to change the speed of the animation based on scroll
+    <div ref={containerRef} className='relative' style={{ height: `${slideViews.length * 50}vh` }}>
       {/* Fixed header with logo */}
       <motion.div
         className='fixed w-screen top-0 pl-14 pt-14 z-10 mix-blend-difference'
@@ -131,9 +124,10 @@ function SlideView({
   const slidePercentBasedOnHisOwnTranslate = SLIDE_WIDTH_IN_PX / totalPixelsMovedPerSlide;
   const extrapolatedSlidePercent = slidePercentBasedOnHisOwnTranslate * percentAssignedBySlide;
   const percentOfSlideExtrapolated = extrapolatedSlidePercent * PEEK_PERCENTAGE;
-  console.log('scrollPercentProgress', scrollPercentProgress);
 
   const baseOffset = (index - 1) * extrapolatedSlidePercent;
+
+  // const correctedPercentAssignedBySlide = (1 - totalLostScrollPercent) / totalSlides;
 
   const translate =
     index === 0
