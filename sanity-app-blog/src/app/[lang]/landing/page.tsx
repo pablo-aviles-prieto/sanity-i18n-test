@@ -18,7 +18,7 @@ export default function LandingPage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [viewportWidth, setViewportWidth] = useState(0);
   const [scrollPercentProgress, setScrollProgress] = useState(0); // Track raw scroll progress
-  console.log('viewportWidth', viewportWidth);
+  const totalPixelsMovedPerSlide = viewportWidth + SLIDE_WIDTH_IN_PX;
 
   const slideViews: SlideView[] = [
     {
@@ -27,8 +27,18 @@ export default function LandingPage() {
       bgColor: 'red',
     },
     { name: 'The talks', photoPath: null, bgColor: 'olive' },
-    // { name: 'The bookstore', photoPath: null, bgColor: 'green' },
+    { name: 'The bookstore', photoPath: null, bgColor: 'green' },
+    { name: 'The bookstore v2', photoPath: null, bgColor: 'blueviolet' },
+    { name: 'The bookstore v3', photoPath: null, bgColor: 'brown' },
+    { name: 'The bookstore v4', photoPath: null, bgColor: 'darkblue' },
+    { name: 'The bookstore v5', photoPath: null, bgColor: 'darkorange' },
   ];
+
+  const totalHeight = viewportWidth
+    ? totalPixelsMovedPerSlide * slideViews.length
+    : window.innerHeight;
+  console.log('totalHeight', totalHeight);
+  console.log('viewportWidth', viewportWidth);
 
   useEffect(() => {
     const updateViewport = () => {
@@ -48,6 +58,7 @@ export default function LandingPage() {
     offset: ['start start', 'end end'],
   });
 
+  // TODO: Remove it, used for debugging since it triggers the remount on the children
   useMotionValueEvent(scrollYProgress, 'change', latest => {
     setScrollProgress(latest);
   });
@@ -56,10 +67,6 @@ export default function LandingPage() {
 
   const percentAssignedBySlide = 1 / slideViews.length;
   const totalScrollablePx = SLIDE_WIDTH_IN_PX * slideViews.length;
-
-  // const scrolledPixels = scrollPercentProgress * totalScrollablePx;
-  console.log('scrollYProgress.get()', scrollYProgress.get());
-  console.log('scrollPercentProgress', scrollPercentProgress);
 
   return (
     <div ref={containerRef} className='relative h-[600vh]'>
@@ -100,10 +107,7 @@ export default function LandingPage() {
 interface SlideProps extends SlideView {
   index: number;
   viewportWidth: number;
-  // scrolledPixels: number;
   scrollPercentProgress: number;
-  // slidesTotalWidthPx: number;
-  // totalSlides: number;
   totalScrollablePx: number;
   percentAssignedBySlide: number;
   scrollYProgress: MotionValue<number>;
@@ -124,10 +128,12 @@ function SlideView({
   bgColor,
 }: SlideProps) {
   const totalPixelsMovedPerSlide = viewportWidth + SLIDE_WIDTH_IN_PX;
-
   const slidePercentBasedOnHisOwnTranslate = SLIDE_WIDTH_IN_PX / totalPixelsMovedPerSlide;
   const extrapolatedSlidePercent = slidePercentBasedOnHisOwnTranslate * percentAssignedBySlide;
   const percentOfSlideExtrapolated = extrapolatedSlidePercent * PEEK_PERCENTAGE;
+  console.log('scrollPercentProgress', scrollPercentProgress);
+
+  const baseOffset = (index - 1) * extrapolatedSlidePercent;
 
   const translate =
     index === 0
@@ -137,10 +143,10 @@ function SlideView({
         }
       : {
           input: [
-            percentOfSlideExtrapolated,
-            percentOfSlideExtrapolated * 2,
-            extrapolatedSlidePercent + percentOfSlideExtrapolated,
-            percentAssignedBySlide + extrapolatedSlidePercent,
+            baseOffset + percentOfSlideExtrapolated,
+            baseOffset + percentOfSlideExtrapolated * 2,
+            baseOffset + extrapolatedSlidePercent + percentOfSlideExtrapolated,
+            baseOffset + percentAssignedBySlide + extrapolatedSlidePercent,
           ],
           output: [
             0,
