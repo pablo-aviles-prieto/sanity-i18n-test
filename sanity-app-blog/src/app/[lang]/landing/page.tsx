@@ -32,6 +32,15 @@ export default function LandingPage() {
     { name: 'The bookstore v5', photoPath: null, bgColor: 'darkorange' },
   ];
 
+  const enhancedViews: SlideView[] = [
+    ...slideViews,
+    {
+      name: 'Form',
+      photoPath: null,
+      bgColor: 'darkred',
+    },
+  ];
+
   useEffect(() => {
     const updateViewport = () => {
       setViewportWidth(window.innerWidth);
@@ -62,7 +71,11 @@ export default function LandingPage() {
 
   return (
     // Modify the height of the container to change the speed of the animation based on scroll
-    <div ref={containerRef} className='relative' style={{ height: `${slideViews.length * 50}vh` }}>
+    <div
+      ref={containerRef}
+      className='relative'
+      style={{ height: `${Math.max(slideViews.length * 50, 150)}vh` }}
+    >
       {/* Fixed header with logo */}
       <motion.div
         className='fixed w-screen top-0 pl-14 pt-14 z-10 mix-blend-difference'
@@ -77,13 +90,13 @@ export default function LandingPage() {
 
       {/* Horizontal scroll container */}
       <div className='sticky top-0 h-screen w-full overflow-hidden'>
-        {slideViews.map((slide, i) => (
+        {enhancedViews.map((slide, i) => (
           <SlideView
             key={slide.name}
             {...slide}
             index={i}
             percentAssignedBySlide={percentAssignedBySlide}
-            // totalSlides={slideViews.length}
+            totalSlides={enhancedViews.length}
             scrollPercentProgress={scrollPercentProgress}
             scrollYProgress={scrollYProgress}
             totalScrollablePx={totalScrollablePx}
@@ -102,6 +115,7 @@ interface SlideProps extends SlideView {
   viewportWidth: number;
   scrollPercentProgress: number;
   totalScrollablePx: number;
+  totalSlides: number;
   percentAssignedBySlide: number;
   scrollYProgress: MotionValue<number>;
 }
@@ -115,7 +129,7 @@ function SlideView({
   scrollPercentProgress,
   scrollYProgress,
   // slidesTotalWidthPx,
-  // totalSlides,
+  totalSlides,
   percentAssignedBySlide,
   totalScrollablePx,
   bgColor,
@@ -125,33 +139,65 @@ function SlideView({
   const extrapolatedSlidePercent = slidePercentBasedOnHisOwnTranslate * percentAssignedBySlide;
   const percentOfSlideExtrapolated = extrapolatedSlidePercent * PEEK_PERCENTAGE;
 
-  const baseOffset = (index - 1) * extrapolatedSlidePercent;
+  const lastBreakpoint = (totalSlides - 1) * extrapolatedSlidePercent + percentAssignedBySlide;
+
+  // Lost percent that needs to be accounted for
+  const totalAssigned = percentAssignedBySlide * totalSlides;
+  const lostScrollPercent = totalAssigned - lastBreakpoint;
+  const lostScrollPercentBySlide = lostScrollPercent / totalSlides;
+  console.log('lostScrollPercent', lostScrollPercent);
+  console.log('lostScrollPercentBySlide', lostScrollPercentBySlide);
+
+  const baseOffset =
+    index === 0
+      ? lostScrollPercentBySlide
+      : (index - 1) * extrapolatedSlidePercent + lostScrollPercentBySlide;
 
   // const correctedPercentAssignedBySlide = (1 - totalLostScrollPercent) / totalSlides;
 
   const translate =
     index === 0
       ? {
-          input: [0, percentAssignedBySlide],
+          input: [lostScrollPercentBySlide, baseOffset + percentAssignedBySlide],
           output: [0, -totalPixelsMovedPerSlide],
         }
-      : {
-          input: [
-            baseOffset + percentOfSlideExtrapolated,
-            baseOffset + percentOfSlideExtrapolated * 2,
-            baseOffset + extrapolatedSlidePercent + percentOfSlideExtrapolated,
-            baseOffset + percentAssignedBySlide + extrapolatedSlidePercent,
-          ],
-          output: [
-            0,
-            -(SLIDE_WIDTH_IN_PX * PEEK_PERCENTAGE),
-            -(SLIDE_WIDTH_IN_PX * PEEK_PERCENTAGE),
-            -totalPixelsMovedPerSlide,
-          ],
-        };
+      : index !== totalSlides - 1
+        ? {
+            input: [
+              baseOffset + percentOfSlideExtrapolated,
+              baseOffset + percentOfSlideExtrapolated * 2,
+              baseOffset + extrapolatedSlidePercent + percentOfSlideExtrapolated,
+              baseOffset + percentAssignedBySlide + extrapolatedSlidePercent,
+            ],
+            output: [
+              0,
+              -(SLIDE_WIDTH_IN_PX * PEEK_PERCENTAGE),
+              -(SLIDE_WIDTH_IN_PX * PEEK_PERCENTAGE),
+              -totalPixelsMovedPerSlide,
+            ],
+          }
+        : {
+            input: [lastBreakpoint, 1],
+            output: [0, -viewportWidth],
+          };
 
   console.log('translate', index, translate.input, translate.output);
   const translateX = useTransform(scrollYProgress, translate.input, translate.output);
+
+  if (index === totalSlides - 1) {
+    return (
+      <motion.div
+        className='absolute border-l border-white h-screen flex items-center justify-center z-[1]'
+        style={{
+          left: `${viewportWidth}px`,
+          backgroundColor: 'reddark',
+          x: translateX,
+        }}
+      >
+        Motherfucking form
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div
@@ -160,7 +206,7 @@ function SlideView({
         left: `${viewportWidth}px`,
         backgroundColor: bgColor,
         x: translateX,
-        zIndex: 10 + index,
+        zIndex: index === totalSlides - 1 ? 9 : 10 + index,
         width: SLIDE_WIDTH_IN_PX,
       }}
     >
