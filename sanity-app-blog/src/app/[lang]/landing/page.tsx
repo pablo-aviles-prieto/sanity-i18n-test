@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { motion, useScroll, useTransform } from 'motion/react';
+import { motion, useScroll, useSpring, useTransform } from 'motion/react';
 import { ListSlide } from '@/app/[lang]/landing/components/list-slide';
 
 export type SlideView = {
@@ -22,7 +22,7 @@ export default function LandingPage() {
     {
       name: 'Irving penn: Centennial',
       photoPath: '/assets/irving-penn-centenial.jpg',
-      bgColor: 'red',
+      bgColor: '',
     },
     { name: 'The talks', photoPath: null, bgColor: 'olive' },
     { name: 'The bookstore', photoPath: null, bgColor: 'green' },
@@ -59,7 +59,15 @@ export default function LandingPage() {
     offset: ['start start', 'end end'],
   });
 
-  const dynamicLogoHeight = useTransform(scrollYProgress, [0, 0.15], ['50rem', '10rem']);
+  const lazyScrollProgress = useSpring(scrollYProgress, {
+    stiffness: 50, // Lower = more delay
+    damping: 20, // Higher = smoother stop
+    mass: 1.05, // Higher = more inertia effect
+    restDelta: 0.0001, // More precision at the end of animation
+    restSpeed: 0.00001, // Lower threshold for considering animation "at rest"
+  });
+
+  const dynamicLogoHeight = useTransform(lazyScrollProgress, [0, 0.15], ['50rem', '10rem']);
 
   return (
     // Modify the height of the container to change the speed of the animation based on scroll
@@ -83,7 +91,7 @@ export default function LandingPage() {
       {/* Horizontal scroll container */}
       <ListSlide
         slideViews={slideViews}
-        scrollYProgress={scrollYProgress}
+        scrollYProgress={lazyScrollProgress}
         viewportWidth={viewportWidth}
       />
     </div>

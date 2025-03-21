@@ -13,8 +13,7 @@ export function ListSlide({ scrollYProgress, viewportWidth, slideViews }: ListSl
   const lateralBorders: 0 | 1 | 2 = 1;
   const borders = lateralBorders * slideViews.length; // having in mind the 1px of the left border of each slide
   const totalPixelsToMove = SLIDE_WIDTH_IN_PX * slideViews.length + borders;
-
-  const translateX = useTransform(scrollYProgress, [0, 1], [viewportWidth, -totalPixelsToMove]);
+  const translateX = useTransform(scrollYProgress, [0, 1], [viewportWidth, -totalPixelsToMove], {});
 
   return (
     <motion.div className='fixed w-screen flex' style={{ x: translateX }}>
