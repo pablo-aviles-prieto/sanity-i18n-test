@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, useScroll, useTransform } from 'motion/react';
 import { ListSlide } from '@/app/[lang]/landing/components/list-slide';
-import { SlideView } from '@/app/[lang]/landing/components/slide-view';
 
 export type SlideView = {
   name: string;
