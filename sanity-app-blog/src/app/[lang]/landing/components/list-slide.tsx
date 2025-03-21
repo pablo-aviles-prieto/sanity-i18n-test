@@ -16,7 +16,7 @@ export function ListSlide({ scrollYProgress, viewportWidth, slideViews }: ListSl
   const translateX = useTransform(scrollYProgress, [0, 1], [viewportWidth, -totalPixelsToMove], {});
 
   return (
-    <motion.div className='fixed w-screen flex' style={{ x: translateX }}>
+    <motion.div className='fixed w-screen flex z-1' style={{ x: translateX }}>
       {slideViews.map((slide, index) => (
         <Slide
           key={slide.name}

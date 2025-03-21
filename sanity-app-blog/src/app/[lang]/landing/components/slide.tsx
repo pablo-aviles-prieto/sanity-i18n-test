@@ -55,8 +55,7 @@ export const Slide = ({
 
   return (
     <motion.div
-      key={name}
-      className={`flex items-center justify-center text-white border-l border-white ${lateralBorders === 1 ? 'border-l' : lateralBorders === 2 ? 'border-x' : ''}`}
+      className={`flex items-center justify-center text-white border-white ${lateralBorders === 1 ? 'border-l' : lateralBorders === 2 ? 'border-x' : ''}`}
       style={{ backgroundColor: bgColor, x: translateX, zIndex: 10 + index }}
     >
       {photoPath ? (

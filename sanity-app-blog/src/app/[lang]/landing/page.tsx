@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, useScroll, useSpring, useTransform } from 'motion/react';
 import { ListSlide } from '@/app/[lang]/landing/components/list-slide';
+import { FormSlide } from '@/app/[lang]/landing/components/form-slide';
 
 export type SlideView = {
   name: string;
@@ -31,15 +32,6 @@ export default function LandingPage() {
     { name: 'The bookstore v4', photoPath: null, bgColor: 'darkblue' },
     { name: 'The bookstore v5', photoPath: null, bgColor: 'darkorange' },
   ];
-
-  // const enhancedViews: SlideView[] = [
-  //   ...slideViews,
-  //   {
-  //     name: 'Form',
-  //     photoPath: null,
-  //     bgColor: 'darkred',
-  //   },
-  // ];
 
   useEffect(() => {
     const updateViewport = () => {
@@ -73,7 +65,7 @@ export default function LandingPage() {
     // Modify the height of the container to change the speed of the animation based on scroll
     <div
       ref={containerRef}
-      className='relative'
+      className='relative bg-white'
       style={{ height: `${Math.max(slideViews.length * 100, 150)}vh` }}
     >
       {/* Fixed header with logo */}
@@ -94,6 +86,7 @@ export default function LandingPage() {
         scrollYProgress={lazyScrollProgress}
         viewportWidth={viewportWidth}
       />
+      <FormSlide scrollYProgress={lazyScrollProgress} viewportWidth={viewportWidth} />
     </div>
   );
 }
