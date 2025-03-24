@@ -12,7 +12,7 @@ export type SlideView = {
 };
 
 export const SLIDE_WIDTH_IN_PX = 868;
-export const PEEK_PERCENTAGE = 0.1;
+export const PEEK_PERCENTAGE = 0.15;
 export const PX_HEIGHT_ASSIGNED_PER_SLIDE = 500;
 
 export default function LandingPage() {
@@ -25,12 +25,12 @@ export default function LandingPage() {
       photoPath: '/assets/irving-penn-centenial.jpg',
       bgColor: '',
     },
-    { name: 'The talks', photoPath: null, bgColor: 'olive' },
-    { name: 'The bookstore', photoPath: null, bgColor: 'green' },
-    { name: 'The bookstore v2', photoPath: null, bgColor: 'blueviolet' },
-    { name: 'The bookstore v3', photoPath: null, bgColor: 'brown' },
-    { name: 'The bookstore v4', photoPath: null, bgColor: 'darkblue' },
-    { name: 'The bookstore v5', photoPath: null, bgColor: 'darkorange' },
+    // { name: 'The talks', photoPath: null, bgColor: 'olive' },
+    // { name: 'The bookstore', photoPath: null, bgColor: 'green' },
+    // { name: 'The bookstore v2', photoPath: null, bgColor: 'blueviolet' },
+    // { name: 'The bookstore v3', photoPath: null, bgColor: 'brown' },
+    // { name: 'The bookstore v4', photoPath: null, bgColor: 'darkblue' },
+    // { name: 'The bookstore v5', photoPath: null, bgColor: 'darkorange' },
   ];
 
   useEffect(() => {
@@ -66,7 +66,7 @@ export default function LandingPage() {
     <div
       ref={containerRef}
       className='relative bg-white'
-      style={{ height: `${Math.max(slideViews.length * 100, 150)}vh` }}
+      style={{ height: `${Math.max(slideViews.length * 200, 250)}vh` }}
     >
       {/* Fixed header with logo */}
       <motion.div
